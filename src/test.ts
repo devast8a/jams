@@ -7,6 +7,7 @@ import { Point } from './point.js';
 import { tutorial } from './scripts/tutorial.js';
 import { devToMaya, mayaToDev } from './data/dictionary.js';
 import { sleep } from './core.js';
+import { FullscreenText } from './fullscreen_text.js';
 
 function translate(words: any[], dictionary: Map<string, string>){
     return words.map(word => dictionary.get(word) || "???");
@@ -275,10 +276,17 @@ export class Simulation {
 
     public LRUwords = new Array<string>();
 
-    public tutorialMessage = '';
-    public tutorial(text: string) {
-        this.tutorialMessage = text;
-        return sleep(4000);
+    public fullscreenText: FullscreenText | undefined;
+
+    public showFullscreenText(text: string) {
+        this.fullscreenText = new FullscreenText(text);
+
+        return new Promise<void>((resolve) => {
+            this.fullscreenText!.completed = () => {
+                resolve();
+                this.fullscreenText = undefined;
+            };
+        });
     }
 
     public async start(){

@@ -1,6 +1,7 @@
 import * as text from './text_animations.js';
 import { Simulation } from './test.js';
 import { TmxEngine } from './tmx.js';
+import { FullscreenText } from './fullscreen_text.js';
 
 function loadImage(src: string){
     return new Promise<HTMLImageElement>((resolve, reject) => {
@@ -117,7 +118,6 @@ window.addEventListener('DOMContentLoaded', async function() {
     }
 
     const map_renderer = new TmxRenderer();
-    let tutorial: TutorialMessage | undefined;
     let dictionaryOpen = false;
 
     let currentWord = '';
@@ -268,15 +268,10 @@ window.addEventListener('DOMContentLoaded', async function() {
             animatedCtx.fillRect(left, top, 64, 64);
         }
 
-        if(simulation.tutorialMessage !== ''){
-            tutorial = new TutorialMessage(simulation.tutorialMessage);
-            simulation.tutorialMessage = '';
-        }
-        if(tutorial !== undefined){
-            tutorial.display(animatedCtx, delta);
-            if(tutorial.time >= 3000){
-                tutorial = undefined;
-            }
+        // Setup tutorial message
+        if(simulation.fullscreenText !== undefined){
+            simulation.fullscreenText.update(delta);
+            simulation.fullscreenText.display(animatedCtx);
         }
 
         requestAnimationFrame(updateAnimatedTiles);
@@ -297,8 +292,8 @@ window.addEventListener('DOMContentLoaded', async function() {
         waterCanvas.height = document.body.clientHeight + 1024;
         waterAnimCanvas.width = document.body.clientWidth + 1024;
         waterAnimCanvas.height = document.body.clientHeight + 1024;
-        staticCanvas.width = document.body.clientWidth + 1024;
-        staticCanvas.height = document.body.clientHeight + 1024;
+        staticCanvas.width = document.body.clientWidth;
+        staticCanvas.height = document.body.clientHeight;
 
         // Schedule a redraw of static tiles
         requestAnimationFrame(x => map_renderer.redraw());
@@ -395,48 +390,3 @@ window.addEventListener('DOMContentLoaded', async function() {
     });
 });
 
-
-// This is completely decoupled from the simulator that instantiates these
-//  If you change the time, you need to also change the time in Simulation.tutorial
-class TutorialMessage {
-    public readonly message: string;
-    public time = 0;
-
-    public constructor(message: string){
-        this.message = message;
-    }
-
-    public display(ctx: CanvasRenderingContext2D, delta: number){
-        this.time += delta;
-        ctx.save();
-        ctx.shadowColor = '#000';
-        ctx.shadowBlur = 10;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-
-        if(this.time < 500){
-            // Fade in time
-            ctx.fillStyle = `rgba(0,0,0,${this.time/500*0.3})`;
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            ctx.fillStyle = `rgba(255,255,255,${this.time/500*1.0})`;
-            ctx.font = '64 PixelFontRegular';
-            ctx.fillText(this.message, ctx.canvas.width/2 - ctx.measureText(this.message).width/2, ctx.canvas.height / 2);
-        } else if(this.time < 500 + 3000) {
-            // Steady state
-            ctx.fillStyle = `rgba(0,0,0,0.3)`;
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            ctx.fillStyle = `rgba(255,255,255,1)`;
-            ctx.font = '64 PixelFontRegular';
-            ctx.fillText(this.message, ctx.canvas.width/2 - ctx.measureText(this.message).width/2, ctx.canvas.height / 2);
-        } else if(this.time < 500 + 3000 + 500) {
-            // Fade out
-            ctx.fillStyle = `rgba(0,0,0,${0.3 - (this.time-2500)/500*0.3})`;
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            ctx.fillStyle = `rgba(255,255,255,${1.0 - (this.time-2500)/500*1.0})`;
-            ctx.font = '64 PixelFontRegular';
-            ctx.fillText(this.message, ctx.canvas.width/2 - ctx.measureText(this.message).width/2, ctx.canvas.height / 2);
-        }
-
-        ctx.restore();
-    }
-}

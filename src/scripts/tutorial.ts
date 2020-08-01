@@ -58,7 +58,7 @@ async function input(simulation: Simulation, maya: Character, player: Character)
             break;
         }
 
-        await simulation.tutorial('To talk, type something and press enter.');
+        await simulation.showFullscreenText('To talk, type something and press enter.');
     }
 
     await maya.emote(Emote.SMILES);
@@ -90,7 +90,7 @@ async function dictionary(simulation: Simulation, maya: Character, player: Chara
         // Introduce the dictionary
         simulation.enableDictionary = true;
         simulation.enableTranslation = true;
-        await simulation.tutorial('Click the bottom right icon to add translations for both words');
+        await simulation.showFullscreenText('Click the bottom right icon to add translations for both words');
     }
 }
 
