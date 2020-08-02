@@ -292,8 +292,8 @@ window.addEventListener('DOMContentLoaded', async function() {
         waterCanvas.height = document.body.clientHeight + 1024;
         waterAnimCanvas.width = document.body.clientWidth + 1024;
         waterAnimCanvas.height = document.body.clientHeight + 1024;
-        staticCanvas.width = document.body.clientWidth;
-        staticCanvas.height = document.body.clientHeight;
+        dictionaryCanvas.width = document.body.clientWidth;
+        dictionaryCanvas.height = document.body.clientHeight;
 
         // Schedule a redraw of static tiles
         requestAnimationFrame(x => map_renderer.redraw());
