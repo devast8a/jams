@@ -2,6 +2,8 @@ import * as text from './text_animations.js';
 import { Simulation } from './test.js';
 import { TmxEngine } from './tmx.js';
 import { FullscreenText } from './fullscreen_text.js';
+import { mayaToPlayer, playerToMaya } from './data/dictionary.js';
+import { load_rules } from './data/rules.js';
 
 function loadImage(src: string){
     return new Promise<HTMLImageElement>((resolve, reject) => {
@@ -9,6 +11,15 @@ function loadImage(src: string){
         img.onload = () => resolve(img);
         img.onerror = (e) => reject(e);
         img.src = src;
+    });
+}
+
+function loadAudio(src: string){
+    return new Promise<HTMLAudioElement>((resolve, reject) => {
+        const audio = new Audio();
+        audio.oncanplay = () => resolve(audio);
+        audio.onerror = (e) => reject(e);
+        audio.src = src;
     });
 }
 
@@ -37,6 +48,21 @@ function createCanvas(width: number, height: number, z: number): [HTMLCanvasElem
     return [canvas, context];
 }
 
+let playingMusic: HTMLAudioElement | undefined;
+let focus = true;
+window.addEventListener('blur', () => {
+    if(playingMusic !== undefined){
+        playingMusic.pause();
+    }
+    focus = false;
+});
+window.addEventListener('focus', () => {
+    if(playingMusic !== undefined){
+        playingMusic.play();
+    }
+    focus = true;
+});
+
 window.addEventListener('DOMContentLoaded', async function() {
     const [dictionaryCanvas, dictionaryCtx] = createCanvas(   0,    0, 4);
     const [animatedCanvas, animatedCtx]     = createCanvas(   0,    0, 3);
@@ -44,24 +70,46 @@ window.addEventListener('DOMContentLoaded', async function() {
     const [waterAnimCanvas, waterAnimCtx]   = createCanvas(1024, 1024, 1);
     const [waterCanvas, waterCtx]           = createCanvas(1024, 1024, 0);
 
-    staticCtx.fillText("Loading please wait, soz", 100, 100);
+    // Load all of the resources
+    staticCtx.fillText("Loading please wait...", 100, 100 + 16 * 0);
 
-    // Load resources
     const tiles1        = await loadImage('assets/basictiles.png');
+    staticCtx.fillText("  assets/basictiles.png", 100, 100 + 16 * 1);
+
     const tiles2        = await loadImage('assets/things.png');
+    staticCtx.fillText("  assets/things.png", 100, 100 + 16 * 2);
+
     const characters    = await loadImage('assets/characters.png');
+    staticCtx.fillText("  assets/characters.png", 100, 100 + 16 * 3);
+
     const water1        = await loadImage('assets/water1.png');
+    staticCtx.fillText("  assets/water1.png", 100, 100 + 16 * 4);
+
     const water2        = await loadImage('assets/water2.png');
+    staticCtx.fillText("  assets/water2.png", 100, 100 + 16 * 5);
 
     const fontRegular   = await loadFont('PixelFontRegular', 'assets/ChubbyChoo-Regular.woff');
+    staticCtx.fillText("  assets/ChubbyChoo-Regular.woff", 100, 100 + 16 * 6);
 
     const simulation = new Simulation();
     simulation.map.parseFromString(await loadFile('assets/map.tmx'), {
         'basictiles.png': tiles1,
         'things.png':     tiles2,
     });
+    staticCtx.fillText("  assets/map.tmx", 100, 100 + 16 * 7);
+
+    const musicTown     = await loadAudio('assets/music/3/Caketown 1.mp3');
+    staticCtx.fillText("  assets/music/3/Caketown 1.mp3", 100, 100 + 16 * 8);
 
     simulation.start();
+    staticCtx.fillText("==READY==", 100, 100 + 16 * 9);
+
+    playingMusic = musicTown;
+    musicTown.loop = true;
+    musicTown.volume = 0.5;
+    if(focus){
+        musicTown.play();
+    }
 
     // Update all other tiles
     const mouse = {x: 0, y: 0};
@@ -84,8 +132,6 @@ window.addEventListener('DOMContentLoaded', async function() {
             // Render the map again with x and y at the center
             staticCtx.clearRect(0, 0, staticCanvas.width, staticCanvas.height);
             waterCtx.clearRect(0, 0, staticCanvas.width, staticCanvas.height);
-            staticCtx.imageSmoothingEnabled = false;
-            waterCtx.imageSmoothingEnabled = false;
 
             simulation.map.draw(this.previousX, this.previousY, staticCtx, waterCtx);
         }
@@ -124,8 +170,15 @@ window.addEventListener('DOMContentLoaded', async function() {
     let selectedWord = '';
     let selectedTranslationText = '';
 
+    load_rules();
+
     let previous = 0;
     function updateAnimatedTiles(time: number){
+        animatedCtx.imageSmoothingEnabled = false;
+        staticCtx.imageSmoothingEnabled = false;
+        waterCtx.imageSmoothingEnabled = false;
+        waterAnimCtx.imageSmoothingEnabled = false;
+
         const delta = time - previous;
         previous = time;
 
@@ -181,21 +234,21 @@ window.addEventListener('DOMContentLoaded', async function() {
         dictionaryCtx.clearRect(0, 0, dictionaryCanvas.width, dictionaryCanvas.height);
 
         // Update water
-        if(Math.floor(time / 500) % 2 === 0){
-            if(waterAnimCtx.fillStyle !== water1Pattern){
-                waterAnimCtx.globalAlpha = 0.7;
-                waterAnimCtx.fillStyle = water1Pattern;
-                waterAnimCtx.clearRect(0, 0, waterAnimCanvas.width, waterAnimCanvas.height);
-                waterAnimCtx.fillRect(0, 0, waterAnimCanvas.clientWidth, waterAnimCanvas.clientHeight);
-            }
-        } else {
-            if(waterAnimCtx.fillStyle !== water2Pattern){
-                waterAnimCtx.globalAlpha = 0.7;
-                waterAnimCtx.fillStyle = water2Pattern;
-                waterAnimCtx.clearRect(0, 0, waterAnimCanvas.width, waterAnimCanvas.height);
-                waterAnimCtx.fillRect(0, 0, waterAnimCanvas.clientWidth, waterAnimCanvas.clientHeight);
-            }
-        }
+        //if(Math.floor(time / 500) % 2 === 0){
+        //    if(waterAnimCtx.fillStyle !== water1Pattern){
+        //        waterAnimCtx.globalAlpha = 0.7;
+        //        waterAnimCtx.fillStyle = water1Pattern;
+        //        waterAnimCtx.clearRect(0, 0, waterAnimCanvas.width, waterAnimCanvas.height);
+        //        waterAnimCtx.fillRect(0, 0, waterAnimCanvas.clientWidth, waterAnimCanvas.clientHeight);
+        //    }
+        //} else {
+        //    if(waterAnimCtx.fillStyle !== water2Pattern){
+        //        waterAnimCtx.globalAlpha = 0.7;
+        //        waterAnimCtx.fillStyle = water2Pattern;
+        //        waterAnimCtx.clearRect(0, 0, waterAnimCanvas.width, waterAnimCanvas.height);
+        //        waterAnimCtx.fillRect(0, 0, waterAnimCanvas.clientWidth, waterAnimCanvas.clientHeight);
+        //    }
+        //}
 
         // Update backgrounds
         camera.x = simulation.player.x;
@@ -204,7 +257,6 @@ window.addEventListener('DOMContentLoaded', async function() {
 
         animatedCtx.clearRect(0, 0, animatedCanvas.width, animatedCanvas.height);
         animatedCtx.translate(-(camera.x * 32 - animatedCanvas.width/2 + 16), -(camera.y * 32 - animatedCanvas.height/2 + 16));
-        animatedCtx.imageSmoothingEnabled = false;
 
         const frame = 0; //Math.floor(i/15) % animation.length;
 
@@ -270,18 +322,14 @@ window.addEventListener('DOMContentLoaded', async function() {
 
         // Setup tutorial message
         if(simulation.fullscreenText !== undefined){
-            simulation.fullscreenText.update(delta);
             simulation.fullscreenText.display(animatedCtx);
+            simulation.fullscreenText.update(delta);
         }
 
         requestAnimationFrame(updateAnimatedTiles);
     }
 
     requestAnimationFrame(updateAnimatedTiles);
-
-    let focus = true;
-    window.addEventListener('blur', () => focus = false);
-    window.addEventListener('focus', () => focus = true);
 
     window.addEventListener('resize', () => {
         animatedCanvas.width = document.body.clientWidth;
@@ -313,7 +361,8 @@ window.addEventListener('DOMContentLoaded', async function() {
                 case 13:
                     // Commit the translation
                     if(selectedWord !== ''){
-                        simulation.player.dictionary.set(selectedWord, selectedTranslationText);
+                        mayaToPlayer.set(selectedWord, selectedTranslationText);
+                        playerToMaya.set(selectedTranslationText, selectedWord);
                         selectedWord = '';
                         selectedTranslationText = '';
                     }

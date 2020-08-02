@@ -8,18 +8,17 @@ import { tutorial } from './scripts/tutorial.js';
 import { devToMaya, mayaToDev, mayaToPlayer } from './data/dictionary.js';
 import { sleep } from './core.js';
 import { FullscreenText } from './fullscreen_text.js';
+import { _, Word } from './language_handler.js';
 
 function translate(words: any[], dictionary: Map<string, string>){
     return words.map(word => dictionary.get(word) || "???");
 }
 
-const _ = Symbol('Placeholder');
-type Word = string | typeof _;
-
 export enum Emote {
     FROWNS,
     POINTS,
     SMILES,
+    WAVES,
 }
 
 export function EmoteToText(emote: Emote, timeFadeout: number){
@@ -27,8 +26,16 @@ export function EmoteToText(emote: Emote, timeFadeout: number){
         case Emote.FROWNS:      return new TextDisplay(`--frowns--`, {animation: Animations.wavey, timeFadeout: timeFadeout, color: '200,255,200'});
         case Emote.POINTS:      return new TextDisplay(`--points--`, {animation: Animations.wavey, timeFadeout: timeFadeout, color: '200,255,200'});
         case Emote.SMILES:      return new TextDisplay(`--smiles--`, {animation: Animations.wavey, timeFadeout: timeFadeout, color: '200,255,200'});
+        case Emote.WAVES:       return new TextDisplay(`--waves--`,  {animation: Animations.wavey, timeFadeout: timeFadeout, color: '200,255,200'});
     }
     throw new Error
+}
+
+interface Rectangle {
+    left: number;
+    right: number;
+    top: number;
+    bottom: number;
 }
 
 export class Character {
@@ -58,6 +65,11 @@ export class Character {
     }
 
     private walk_promise: (() => void) | undefined = undefined;
+
+    public inRect(rect: Rectangle) {
+        return rect.left <= this.x && this.x <= rect.right &&
+            rect.top <= this.y && this.y <= rect.bottom;
+    }
 
     public walk(target: Point, offset?: Point){
         // Is there a pending completion of a walk?
@@ -178,78 +190,6 @@ export class Character {
     }
 }
 
-interface SpeechHandler {
-    words: (string | typeof _)[];
-    fn: (speaker: Character, listener: Character, words: string[]) => Promise<void>;
-}
-const handlers = new Array<SpeechHandler>();
-function reg(
-    words: (string | typeof _)[],
-    fn: (speaker: Character, listener: Character, words: string[]) => Promise<void>,
-){
-    handlers.push({words: words, fn: fn});
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Implement handlers for MayaLang
-
-// What is the name of __?
-// NAME <WHAT> <NAME>
-reg(['NAME', _, 'QUERY'], async(speaker, listener, words) => {
-    if(words[1] === 'YOU'){
-        await listener.talk(speaker, ['NAME', 'SELF', listener.name]);
-    }
-});
-
-// Where is the location of __?
-// LOCATION <WHAT> <NAME>
-reg(['LOCATION', _, 'QUERY'], async(speaker, listener, words) => {
-
-});
-
-// Translate all of the handlers words
-handlers.forEach((handler) => handler.words = translate(handler.words, devToMaya));
-
-function parse(speaker: Character, listener: Character, speech: string){
-    // Break it into words
-    // Use the user dictionary to translate
-    const words = translate(speech.split(/ /g), devToMaya);
-
-    // Find any matches in the speech handlers
-    const matches = handlers.filter(entry => {
-        if(entry.words.length > words.length){
-            return false;
-        }
-
-        for(let i = 0; i < words.length; i++){
-            if(entry.words[i] !== words[i] && entry.words[i] !== _){
-                return false;
-            }
-        }
-
-        return true;
-    });
-
-    if(matches.length === 0){
-        // I don't understand
-        return;
-    }
-
-    // Select the one with the least placeholders
-    let leastV = matches[0].words.filter(x => x === _).length;
-    let least  = matches[0];
-    for(let i = 1; i < matches.length; i++){
-        let l = matches[i].words.filter(x => x === _).length;
-        if(l < leastV){
-            leastV = l;
-            least = matches[i];
-        }
-    }
-
-    // Execute it
-    least.fn(speaker, listener, translate(words, mayaToDev));
-}
-
 export class Simulation {
     public readonly maya = new Character(this, devToMaya, CharacterAnimations.female);
     public readonly player = new Character(this, mayaToPlayer, CharacterAnimations.male);
@@ -271,6 +211,7 @@ export class Simulation {
 
         return new Promise<void>((resolve) => {
             this.fullscreenText!.completed = () => {
+                console.log();
                 resolve();
                 this.fullscreenText = undefined;
             };

@@ -67,8 +67,8 @@ tile_names[1 + 55] = "DRAWERS";
 
 tile_names[1 + 56] = undefined; // Stairs (Unused)
 tile_names[1 + 57] = undefined; // Stairs (Unused)
-tile_names[1 + 58] = "ROCKS";
-tile_names[1 + 59] = "ROCKS";
+tile_names[1 + 58] = "ROCK";
+tile_names[1 + 59] = "ROCK";
 tile_names[1 + 60] = "TORCH";
 tile_names[1 + 61] = "TORCH";
 tile_names[1 + 62] = undefined; // Mountain Icons (Unused)

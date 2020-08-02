@@ -41,7 +41,7 @@ export class FullscreenText {
         const y = ctx.canvas.height/2;
 
         ctx.fillText(this.message, x, y);
-        ctx.strokeText(this.message, x, y);
+        //ctx.strokeText(this.message, x, y);
 
         ctx.restore();
     }
