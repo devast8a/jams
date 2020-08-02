@@ -20,13 +20,10 @@ export class Timer {
 }
 
 export class InputHandler {
-    public returnCurrent = false;
-    protected queue = new Array<string>();
-
+    public handler: ((message: string) => void) | undefined;
+    public entered = false;
     public current = '';
-
     public enabled = false;
-    public queueEnable = false;
 
     private timer: Timer | undefined;
     private promiseResolve: ((value: string | undefined) => void) | undefined = undefined;
@@ -39,7 +36,7 @@ export class InputHandler {
         if(this.timer !== undefined){
             this.timer.reset();
         }
-        this.returnCurrent = false;
+        this.entered = false;
 
         switch(event.keyCode){
             case 8:
@@ -49,11 +46,11 @@ export class InputHandler {
             case 13:
                 if(this.promiseResolve){
                     this.resolve(this.current);
-                } else if (this.queueEnable) {
-                    this.queue.push(this.current);
+                } else if(this.handler !== undefined) {
+                    this.handler(this.current);
                     this.current = '';
                 } else {
-                    this.returnCurrent = true;
+                    this.entered = true;
                 }
                 break;
 
@@ -90,15 +87,11 @@ export class InputHandler {
     public getInput(timeout: number = 2000){
         this.enabled = true;
 
-        if(this.returnCurrent){
+        if(this.entered){
             const result = this.current;
             this.current = '';
-            this.returnCurrent = false;
+            this.entered = false;
             return Promise.resolve(result);
-        }
-
-        if(this.queue.length > 0){
-            return Promise.resolve(this.queue.pop()!);
         }
 
         this.timer = new Timer(timeout, () => this.resolve(undefined));

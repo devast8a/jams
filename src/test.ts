@@ -5,7 +5,7 @@ import { TmxEngine } from './tmx.js';
 import { PathFinder } from './path_finder.js';
 import { Point } from './point.js';
 import { tutorial } from './scripts/tutorial.js';
-import { devToMaya, mayaToDev } from './data/dictionary.js';
+import { devToMaya, mayaToDev, mayaToPlayer } from './data/dictionary.js';
 import { sleep } from './core.js';
 import { FullscreenText } from './fullscreen_text.js';
 
@@ -126,15 +126,6 @@ export class Character {
         return new Promise((resolve, reject) => {
             text.onTimeout = () => resolve();
         });
-    }
-
-    public async getInput(delay: number): Promise<Word[] | undefined> {
-        return Promise.race([
-            sleep(delay),
-            new Promise<Word[]>((resolve, reject) => {
-                resolve(translate(["NAME", "SELF", this.name], devToMaya));
-            }),
-        ]);
     }
 
     private targetTile: Point | undefined;
@@ -260,11 +251,8 @@ function parse(speaker: Character, listener: Character, speech: string){
 }
 
 export class Simulation {
-    public readonly playerDictionary = new Map<string, string>([
-        ["MAYA", "MAYA"]
-    ]);
     public readonly maya = new Character(this, devToMaya, CharacterAnimations.female);
-    public readonly player = new Character(this, this.playerDictionary, CharacterAnimations.male);
+    public readonly player = new Character(this, mayaToPlayer, CharacterAnimations.male);
 
     public readonly people = new Array<Character>();
     public readonly inputHandler = new InputHandler();

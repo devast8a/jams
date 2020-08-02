@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Translate English used in the development to MayaLang
 export const devToMaya = new Map([
-    ["MAYA", "MAYA"],           // Hack to avoid translating MAYA's name
+    ["MAYA", "MAYA"],           // HACK: Avoid translating Maya's name
 
     // Markers
     ['QUERY',   'TU'],          // QUERY
@@ -17,6 +17,7 @@ export const devToMaya = new Map([
     // Things
     ['HOME',    'TATU'],
     ['BED',     'WHUATU'],      // LIT. Small Home
+    ['CHAIR',   'RELUH'],
 
     // BED
     // BRIDGE
@@ -65,6 +66,7 @@ export const devToMaya = new Map([
     ['SELF',    'CHU'],
     ['YOU',     'CHI'],
     ['GROUP',   'CHA'],
+    ['THAT',    'CHE'],
 
     // Yes/No
     ['YES',     'JI'],
@@ -91,3 +93,10 @@ for(const [key, value] of devToMaya){
 if(new Set(devToMaya.values()).size !== devToMaya.size){
     console.log('== Duplicate word in dictionary');
 }
+
+export const mayaToPlayer = new Map<string, string>([
+    ["MAYA", "MAYA"],
+]);
+export const playerToMaya = new Map<string, string>([
+    ["MAYA", "MAYA"],
+]);

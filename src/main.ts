@@ -219,7 +219,7 @@ window.addEventListener('DOMContentLoaded', async function() {
         animatedCtx.fillStyle = `rgba(${simulation.player.textColor},1)`;
         let text = simulation.inputHandler.current;
         const textWidth = animatedCtx.measureText(text).width;
-        if(simulation.inputHandler.returnCurrent){
+        if(simulation.inputHandler.entered){
             if(time % 1500 < 500){
                 text += '.';
             } else if(time % 1500 < 1000){

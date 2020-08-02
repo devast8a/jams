@@ -1,5 +1,6 @@
 import { Character, Emote, Simulation } from '../test.js';
 import { sleep } from '../core.js';
+import { mayaToPlayer, playerToMaya, mayaToDev, devToMaya } from '../data/dictionary.js';
 
 const MED_PAUSE = 1000;
 
@@ -10,7 +11,19 @@ async function walk_to_a(character: Character){
 
 async function walk_to_b(character: Character){
     await character.walk({x: -43, y: 2});
+    character.animation = 'standing/right';
 }
+
+async function walk_to_chair(character: Character){
+    await character.walk({x: -45, y: 2});
+    character.animation = 'standing/down';
+}
+
+async function walk_to_drawers(character: Character){
+    await character.walk({x: -46, y: 2});
+    character.animation = 'standing/up';
+}
+
 
 export async function tutorial(simulation: Simulation, maya: Character, player: Character){
     // Setup everything for the start of the game
@@ -22,18 +35,20 @@ export async function tutorial(simulation: Simulation, maya: Character, player: 
     player.animation = 'standing/left';
     player.name = 'placeholder';
 
-    await input(simulation, maya, player);
+    //await input(simulation, maya, player);
+    //await dictionary(simulation, maya, player);
+    //await name_self(simulation, maya, player);
+    //await name_you(simulation, maya, player);
+    //await name_this(simulation, maya, player);
+    //await follow(simulation, maya, player);
 
-    // HACK: Insert player name into dictionaries to avoid translation
-    maya.dictionary.set(player.name, player.name);
-    player.dictionary.set(player.name, player.name);
-    simulation.playerDictionary.set(player.name, player.name);
-
-    await dictionary(simulation, maya, player);
+    simulation.enableDictionary = true;
     simulation.inputHandler.enabled = true;
-    await name_self(simulation, maya, player);
-    await name_you(simulation, maya, player);
-    await name_this(simulation, maya, player);
+    await maya.talk(player, ['SELF', 'NAME', 'QUERY', 'LOCATION']);
+    const result = await simulation.inputHandler.getInput();
+    console.log(result);
+    console.log(player.dictionary);
+    await maya.talk(player, ['SELF', 'NAME', 'QUERY', 'LOCATION']);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -62,6 +77,12 @@ async function input(simulation: Simulation, maya: Character, player: Character)
     }
 
     await maya.emote(Emote.SMILES);
+
+    // HACK: Insert player name into dictionaries to avoid translation
+    devToMaya.set(player.name, player.name);
+    mayaToDev.set(player.name, player.name);
+    playerToMaya.set(player.name, player.name);
+    mayaToPlayer.set(player.name, player.name);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -92,6 +113,8 @@ async function dictionary(simulation: Simulation, maya: Character, player: Chara
         simulation.enableTranslation = true;
         await simulation.showFullscreenText('Click the bottom right icon to add translations for both words');
     }
+
+    simulation.inputHandler.enabled = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -152,4 +175,25 @@ async function name_you(simulation: Simulation, maya: Character, player: Charact
 ////////////////////////////////////////////////////////////////////////////////
 // Words taught: THIS
 async function name_this(simulation: Simulation, maya: Character, player: Character){
+    while(true){
+        await walk_to_chair(maya);
+        await maya.emote(Emote.POINTS);
+        await maya.talk(player, ['NAME', 'THAT', 'CHAIR']);
+
+        await walk_to_drawers(maya);
+        await maya.emote(Emote.POINTS);
+        await maya.talk(player, ['NAME', 'THAT', 'DRAWERS']);
+
+        await walk_to_chair(maya);
+        await maya.talk(player, ['NAME', 'THAT', 'QUERY']);
+        const result = await simulation.inputHandler.getInput();
+
+        console.log(result);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Words taught: FOLLOW
+// Mechanics taught: Player movement
+async function follow(simulation: Simulation, maya: Character, player: Character){
 }
